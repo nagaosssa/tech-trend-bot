@@ -3,10 +3,25 @@ import sys
 from dotenv import load_dotenv
 from api_client import PerplexityClient
 from notifier import DiscordNotifier
+from trend_history import TrendHistory
 import datetime
+import json
 
 # Load environment variables
 load_dotenv()
+
+CONFIG_FILE = "bot_config.json"
+
+def load_config():
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {
+            "search_category": "Dev Tools, PKM, Privacy Browsers, & Student Deals",
+            "target_languages": "TypeScript, PHP, AWS, Rust, Go, New AI Tools",
+            "excluded_keywords": ""
+        }
 
 def main():
     print(f"--- Bot Started at {datetime.datetime.now()} ---")
@@ -23,23 +38,43 @@ def main():
     # Initialize agents
     client = PerplexityClient(api_key=pplx_key)
     notifier = DiscordNotifier(token=discord_token, channel_id=discord_channel)
+    history = TrendHistory()  # 履歴管理（7日間保持）
 
     # 1. Search for Trends
     print("Searching for Alpha trends...")
-    result = client.get_daily_trends(category="Dev Tools, PKM, Privacy Browsers, & Student Deals")
+    
+    # Load config
+    config = load_config()
+    category = config.get("search_category", "Dev Tools")
+    targets = config.get("target_languages", "")
+    
+    print(f"Category: {category}")
+    print(f"Targets: {targets}")
+    
+    result = client.get_daily_trends(category=category, target_languages=targets)
     
     if "error" in result:
         print(f"API Error: {result['error']}")
         notifier.send(content=f"⚠️ Trend Bot Error: {result['error']}")
         return
 
-    # 2. Format Message (Discord Embed)
-    print("Formatting message...")
+    # 2. Filter Duplicates
+    print("Checking for duplicates...")
     trends = result.get("trends", [])
     if not trends:
         print("No trends found.")
         return
 
+    # 重複排除: 過去7日間に通知済みのツールを除外
+    new_trends = [t for t in trends if not history.is_duplicate(t['name'])]
+    
+    if not new_trends:
+        print("All trends are duplicates. Skipping notification.")
+        return
+    
+    print(f"Found {len(new_trends)} new trend(s) out of {len(trends)}.")
+
+    # 3. Format Message (Discord Embed)
     date_str = datetime.datetime.now().strftime('%Y-%m-%d')
     summary = result.get('one_line_summary', 'No summary provided.')
     
@@ -54,7 +89,7 @@ def main():
         }
     }
 
-    for i, item in enumerate(trends, 1):
+    for i, item in enumerate(new_trends, 1):
         field_value = f"{item['description']}\n**話題性:** {item['buzz_factor']}\n[リンク]({item['url']})"
         embed["fields"].append({
             "name": f"{i}. {item['name']}",
@@ -62,12 +97,16 @@ def main():
             "inline": False
         })
     
-    # 3. Notify
+    # 4. Notify
     print("Sending notification...")
     if discord_token and discord_channel:
         success = notifier.send(embeds=[embed])
         if success:
             print("Notification sent successfully!")
+            # 5. 通知成功後、履歴に追加
+            for t in new_trends:
+                history.add(t['name'], t.get('url', ''))
+            print(f"Added {len(new_trends)} trend(s) to history.")
         else:
             print("Failed to send notification.")
     else:
@@ -76,6 +115,10 @@ def main():
         print(f"Summary: {embed['description']}")
         for f in embed['fields']:
             print(f"- {f['name']}: {f['value']}")
+        # コンソール出力時も履歴に追加
+        for t in new_trends:
+            history.add(t['name'], t.get('url', ''))
+        print(f"Added {len(new_trends)} trend(s) to history.")
 
 if __name__ == "__main__":
     main()

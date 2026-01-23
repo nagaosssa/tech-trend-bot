@@ -1,0 +1,24 @@
+{
+  "history": [
+    {
+      "name": "Codebuff",
+      "url": "https://github.com/codebuffai/codebuff",
+      "notified_at": "2026-01-24T08:09:38.116521"
+    },
+    {
+      "name": "mirrord",
+      "url": "https://github.com/metalbear-co/mirrord",
+      "notified_at": "2026-01-24T08:09:38.118728"
+    },
+    {
+      "name": "Hermit",
+      "url": "https://github.com/cashapp/hermit",
+      "notified_at": "2026-01-24T08:09:38.120903"
+    },
+    {
+      "name": "eslint-plugin-react-you-might-not-need-an-effect",
+      "url": "https://github.com/nickvandyke/eslint-plugin-react-you-might-not-need-an-effect",
+      "notified_at": "2026-01-24T08:24:20.410841"
+    }
+  ]
+}

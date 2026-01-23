@@ -13,6 +13,7 @@ st.set_page_config(
 
 # Constants
 KNOWN_TOOLS_FILE = "known_tools.json"
+CONFIG_FILE = "bot_config.json"
 
 # Load Styles
 st.markdown("""
@@ -49,6 +50,21 @@ def load_tools():
 def save_tools(tools):
     with open(KNOWN_TOOLS_FILE, "w", encoding="utf-8") as f:
         json.dump({"known_tools": tools}, f, indent=4, ensure_ascii=False)
+
+def load_config():
+    try:
+        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {
+            "search_category": "Dev Tools, PKM, Privacy Browsers, & Student Deals",
+            "target_languages": "TypeScript, PHP, AWS, Rust, Go",
+            "excluded_keywords": ""
+        }
+
+def save_config(config):
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=4, ensure_ascii=False)
 
 def run_bot():
     try:
@@ -120,7 +136,23 @@ with col2:
 
     st.divider()
     
-    st.markdown("### Configuration")
-    st.info(f"**Config File**: `{KNOWN_TOOLS_FILE}`")
-    st.markdown("To change API Keys, edit `.env` manually.")
+    st.divider()
+    
+    st.markdown("### ⚙️ Search Configuration")
+    config = load_config()
+    
+    with st.form("config_form"):
+        new_category = st.text_area("Search Category / Context", value=config.get("search_category", ""))
+        new_targets = st.text_input("Target Languages / Techs (comma separated)", value=config.get("target_languages", ""))
+        new_excluded = st.text_input("Excluded Keywords (comma separated)", value=config.get("excluded_keywords", ""))
+        
+        if st.form_submit_button("Save Configuration"):
+            config["search_category"] = new_category
+            config["target_languages"] = new_targets
+            config["excluded_keywords"] = new_excluded
+            save_config(config)
+            st.success("Configuration saved!")
+            st.rerun()
+
+    st.caption(f"Config File: `{CONFIG_FILE}`")
 

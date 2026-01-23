@@ -65,12 +65,13 @@ class PerplexityClient:
         except Exception as e:
             return {"error": str(e)}
 
-    def get_daily_trends(self, category="Dev Tools, PKM, Privacy Browsers, & Student Deals"):
+    def get_daily_trends(self, category="Dev Tools", target_languages=None):
         """
         Searches for trending tools/libraries in the specified category within the last 24h.
         Includes 3 distinct types (Alpha Trend, Power Tip, Hidden Gem).
         """
         known_tools_str = ", ".join(self.known_tools)
+        targets_str = f"ターゲット: {target_languages}" if target_languages else "ターゲット: TypeScript, PHP, AWS, 新興AIツール"
         
         system_prompt = f"""
         あなたは「テックトレンドスカウト」です。
@@ -84,7 +85,7 @@ class PerplexityClient:
         # 提案の3本柱（必ず各1つずつ含めること）:
         1. **Alpha Trend (最新トレンド)**:
            - 過去24〜48時間以内にGitHub Trending (英語) や Hacker Newsで火がついたばかりの「誰も知らない」ツール。
-           - ターゲット: TypeScript, PHP, AWS, 新興AIツール。
+           - {targets_str}。
         
         2. **Power Tip (活用術・拡張)**:
            - ユーザーの「既知のツール」（特にObsidian, Brave, Notion）を強化するプラグイン、拡張機能、または高度な設定。
