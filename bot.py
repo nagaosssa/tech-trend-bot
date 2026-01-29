@@ -23,8 +23,33 @@ def load_config():
             "excluded_keywords": ""
         }
 
+LAST_RUN_FILE = "last_run.txt"
+
+def has_run_today():
+    try:
+        if os.path.exists(LAST_RUN_FILE):
+            with open(LAST_RUN_FILE, "r", encoding="utf-8") as f:
+                last_run_date = f.read().strip()
+            current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+            return last_run_date == current_date
+    except Exception as e:
+        print(f"Warning: Could not check last run file: {e}")
+    return False
+
+def mark_as_run_today():
+    try:
+        current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+        with open(LAST_RUN_FILE, "w", encoding="utf-8") as f:
+            f.write(current_date)
+    except Exception as e:
+        print(f"Warning: Could not update last run file: {e}")
+
 def main():
     print(f"--- Bot Started at {datetime.datetime.now()} ---")
+
+    if has_run_today():
+        print("Already run today. Exiting.")
+        return
     
     # Check keys
     pplx_key = os.getenv("PERPLEXITY_API_KEY")
@@ -107,6 +132,7 @@ def main():
             for t in new_trends:
                 history.add(t['name'], t.get('url', ''))
             print(f"Added {len(new_trends)} trend(s) to history.")
+            mark_as_run_today()
         else:
             print("Failed to send notification.")
     else:
@@ -119,6 +145,7 @@ def main():
         for t in new_trends:
             history.add(t['name'], t.get('url', ''))
         print(f"Added {len(new_trends)} trend(s) to history.")
+        mark_as_run_today()
 
 if __name__ == "__main__":
     main()
