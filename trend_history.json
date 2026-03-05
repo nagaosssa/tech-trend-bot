@@ -1,34 +1,49 @@
 {
   "history": [
     {
-      "name": "Codebuff",
-      "url": "https://github.com/codebuffai/codebuff",
-      "notified_at": "2026-01-24T08:09:38.116521"
-    },
-    {
-      "name": "mirrord",
-      "url": "https://github.com/metalbear-co/mirrord",
-      "notified_at": "2026-01-24T08:09:38.118728"
-    },
-    {
-      "name": "Hermit",
-      "url": "https://github.com/cashapp/hermit",
-      "notified_at": "2026-01-24T08:09:38.120903"
-    },
-    {
-      "name": "eslint-plugin-react-you-might-not-need-an-effect",
-      "url": "https://github.com/nickvandyke/eslint-plugin-react-you-might-not-need-an-effect",
-      "notified_at": "2026-01-24T08:24:20.410841"
-    },
-    {
-      "name": "snitch",
-      "url": "https://github.com/carroll-broer/snitch",
-      "notified_at": "2026-01-29T11:21:38.175438"
+      "name": "Mantic.sh",
+      "url": "https://github.com/marcoaapfortes/Mantic.sh",
+      "notified_at": "2026-02-24T10:51:07.521634"
     },
     {
       "name": "Obsidian - Advanced URI plugin",
       "url": "https://github.com/Vinzent03/obsidian-advanced-uri",
-      "notified_at": "2026-01-29T11:21:38.178701"
+      "notified_at": "2026-02-24T10:51:07.523639"
+    },
+    {
+      "name": "Syncthing",
+      "url": "https://github.com/syncthing/syncthing",
+      "notified_at": "2026-02-24T10:51:07.523639"
+    },
+    {
+      "name": "Tilt",
+      "url": "https://tilt.dev",
+      "notified_at": "2026-02-25T09:32:12.659979"
+    },
+    {
+      "name": "Obsidian Advanced URI",
+      "url": "https://github.com/Vinzent03/obsidian-advanced-uri",
+      "notified_at": "2026-02-26T08:39:53.763210"
+    },
+    {
+      "name": "Lapce",
+      "url": "https://github.com/lapce/lapce",
+      "notified_at": "2026-02-26T08:39:53.763210"
+    },
+    {
+      "name": "gh-dash",
+      "url": "https://github.com/dlvhdr/gh-dash",
+      "notified_at": "2026-02-28T16:19:41.908292"
+    },
+    {
+      "name": "Obsidian - Text Generator Plugin",
+      "url": "https://github.com/ColinEberhardt/awesome-ai-developer-tools",
+      "notified_at": "2026-03-01T06:18:00.375138"
+    },
+    {
+      "name": "Sweep",
+      "url": "https://github.com/ColinEberhardt/awesome-ai-developer-tools",
+      "notified_at": "2026-03-01T06:18:00.377142"
     }
   ]
 }
