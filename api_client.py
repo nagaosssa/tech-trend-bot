@@ -1,6 +1,35 @@
 import os
+import re
 from openai import OpenAI
 import json
+
+def _format_api_error(e):
+    """
+    APIエラーを人間が読みやすい形式に整形する。
+    HTMLタグを除去し、ステータスコード別のメッセージを返す。
+    """
+    error_str = str(e)
+
+    # HTMLタグを除去
+    clean_msg = re.sub(r'<[^>]+>', '', error_str).strip()
+    # 連続する空白・改行を整理
+    clean_msg = re.sub(r'\s+', ' ', clean_msg).strip()
+
+    # HTTPステータスコード別の分かりやすいメッセージ
+    if '401' in error_str:
+        return "認証エラー (401): APIキーが無効または期限切れです。Perplexity APIダッシュボードでキーを確認してください。"
+    elif '403' in error_str:
+        return "アクセス拒否 (403): このAPIエンドポイントへのアクセス権限がありません。"
+    elif '429' in error_str:
+        return "レート制限 (429): APIリクエストが多すぎます。しばらく待ってから再試行してください。"
+    elif '500' in error_str or '502' in error_str or '503' in error_str:
+        return "サーバーエラー: Perplexity APIが一時的に利用できません。後ほど再試行してください。"
+
+    # 汎用: 短く切り詰めて返す
+    if len(clean_msg) > 300:
+        clean_msg = clean_msg[:300] + '...'
+    return f"APIエラー: {clean_msg}"
+
 
 class PerplexityClient:
     def __init__(self, api_key=None):
@@ -63,7 +92,7 @@ class PerplexityClient:
             return json.loads(content)
 
         except Exception as e:
-            return {"error": str(e)}
+            return {"error": _format_api_error(e)}
 
     def get_daily_trends(self, category="Dev Tools", target_languages=None):
         """

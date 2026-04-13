@@ -79,8 +79,11 @@ def main():
     result = client.get_daily_trends(category=category, target_languages=targets)
     
     if "error" in result:
-        print(f"API Error: {result['error']}")
-        notifier.send(content=f"⚠️ Trend Bot Error: {result['error']}")
+        error_detail = result['error']
+        print(f"API Error: {error_detail}")
+        # Discord通知用にメッセージを500文字に制限
+        short_msg = error_detail[:500] if len(error_detail) > 500 else error_detail
+        notifier.send(content=f"⚠️ Trend Bot Error: {short_msg}")
         return
 
     # 2. Filter Duplicates
