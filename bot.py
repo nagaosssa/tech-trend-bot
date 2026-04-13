@@ -1,7 +1,7 @@
 import os
 import sys
 from dotenv import load_dotenv
-from api_client import PerplexityClient
+from api_client import GeminiTrendClient
 from notifier import DiscordNotifier
 from trend_history import TrendHistory
 import datetime
@@ -52,16 +52,16 @@ def main():
         return
     
     # Check keys
-    pplx_key = os.getenv("PERPLEXITY_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
     discord_token = os.getenv("DISCORD_BOT_TOKEN")
     discord_channel = os.getenv("DISCORD_CHANNEL_ID")
     
-    if not pplx_key:
-        print("Error: PERPLEXITY_API_KEY is missing.")
+    if not gemini_key:
+        print("Error: GEMINI_API_KEY is missing.")
         return
 
     # Initialize agents
-    client = PerplexityClient(api_key=pplx_key)
+    client = GeminiTrendClient(api_key=gemini_key)
     notifier = DiscordNotifier(token=discord_token, channel_id=discord_channel)
     history = TrendHistory()  # 履歴管理（7日間保持）
 
@@ -113,7 +113,7 @@ def main():
         "color": 3066993, # Python Blue (or keep Teal)
         "fields": [],
         "footer": {
-            "text": "Powered by Perplexity Sonar Pro"
+            "text": "Powered by Gemini 1.5 Flash (Search Grounding)"
         }
     }
 

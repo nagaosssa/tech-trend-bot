@@ -1,104 +1,60 @@
 import os
-import re
-from openai import OpenAI
 import json
+import google.generativeai as genai
 
 def _format_api_error(e):
-    """
-    APIエラーを人間が読みやすい形式に整形する。
-    HTMLタグを除去し、ステータスコード別のメッセージを返す。
-    """
     error_str = str(e)
+    if '401' in error_str or '403' in error_str or 'API_KEY_INVALID' in error_str:
+        return "認証エラー: APIキーが無効または権限がありません。"
+    elif '429' in error_str or 'RESOURCE_EXHAUSTED' in error_str:
+        return "レート制限 (429): APIリクエストが多すぎます。"
+    elif '500' in error_str or '503' in error_str:
+        return "サーバーエラー: Gemini APIが一時的に利用できません。"
+    
+    if len(error_str) > 300:
+        error_str = error_str[:300] + '...'
+    return f"APIエラー: {error_str}"
 
-    # HTMLタグを除去
-    clean_msg = re.sub(r'<[^>]+>', '', error_str).strip()
-    # 連続する空白・改行を整理
-    clean_msg = re.sub(r'\s+', ' ', clean_msg).strip()
-
-    # HTTPステータスコード別の分かりやすいメッセージ
-    if '401' in error_str:
-        return "認証エラー (401): APIキーが無効または期限切れです。Perplexity APIダッシュボードでキーを確認してください。"
-    elif '403' in error_str:
-        return "アクセス拒否 (403): このAPIエンドポイントへのアクセス権限がありません。"
-    elif '429' in error_str:
-        return "レート制限 (429): APIリクエストが多すぎます。しばらく待ってから再試行してください。"
-    elif '500' in error_str or '502' in error_str or '503' in error_str:
-        return "サーバーエラー: Perplexity APIが一時的に利用できません。後ほど再試行してください。"
-
-    # 汎用: 短く切り詰めて返す
-    if len(clean_msg) > 300:
-        clean_msg = clean_msg[:300] + '...'
-    return f"APIエラー: {clean_msg}"
-
-
-class PerplexityClient:
+class GeminiTrendClient:
     def __init__(self, api_key=None):
-        self.api_key = api_key or os.getenv("PERPLEXITY_API_KEY")
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
-            raise ValueError("Perplexity API Key is missing. Please set it in .env or pass it to the constructor.")
+            raise ValueError("Gemini API Key is missing. Please set it in .env.")
         
-        self.client = OpenAI(
-            api_key=self.api_key,
-            base_url="https://api.perplexity.ai"
-        )
+        genai.configure(api_key=self.api_key)
         
-        # Load known tools
         try:
             with open("known_tools.json", "r", encoding="utf-8") as f:
                 self.known_tools = json.load(f).get("known_tools", [])
         except FileNotFoundError:
             self.known_tools = []
-
-    def get_proposals(self, user_goal):
-        """
-        Generates search queries and tool recommendations based on user goal.
-        """
-        system_prompt = """
-        You are an expert digital consultant. Your goal is to help the user achieve their objective by providing:
-        1. STRATEGIC SEARCH QUERIES: 3-5 specific, high-quality web search queries to find deep information, tutorials, or hidden gems.
-        2. TOOL & SERVICE RECOMMENDATIONS: 3 specific tools, software, or services (SaaS, AI, etc.) that significantly improve efficiency for this goal.
-        
-        Return the response in the following JSON format ONLY:
-        {
-            "search_queries": [
-                {"query": "query 1", "reason": "why this is useful"},
-                ...
-            ],
-            "recommendations": [
-                {"name": "Tool Name", "type": "SaaS/AI/Extension", "description": "Brief focused description", "reason": "Why it helps this specific user goal"},
-                ...
-            ],
-            "summary_advice": "A brief strategic advice paragraph."
-        }
-        """
-
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"My goal is: {user_goal}"}
-        ]
-
-        try:
-            response = self.client.chat.completions.create(
-                model="sonar-pro",
-                messages=messages
-            )
             
-            content = response.choices[0].message.content
-            # Ensure we get clean JSON
-            start = content.find('{')
-            end = content.rfind('}') + 1
-            if start != -1 and end != -1:
-                return json.loads(content[start:end])
-            return json.loads(content)
-
+    def get_available_models(self):
+        """APIから利用可能なモデル一覧を取得し、最適な順にソートして返す"""
+        try:
+            models = []
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    # 'models/' プレフィックスを削除して扱う
+                    name = m.name.replace('models/', '')
+                    models.append(name)
+            
+            # Typescriptコードを参考に優先順位付け（1.5-flash > 1.5-pro > ほか）
+            def score(name):
+                # 最新のモデル（2.5や1.5）を優先するロジック
+                if '1.5-flash' in name: return 3
+                if '1.5-pro' in name: return 2
+                if 'gemini-pro' in name: return 1
+                return 0
+                
+            models.sort(key=score, reverse=True)
+            return models
         except Exception as e:
-            return {"error": _format_api_error(e)}
+            print(f"Warning: Failed to list models: {e}")
+            # フォールバック
+            return ['gemini-1.5-flash-latest', 'gemini-pro']
 
     def get_daily_trends(self, category="Dev Tools", target_languages=None):
-        """
-        Searches for trending tools/libraries in the specified category within the last 24h.
-        Includes 3 distinct types (Alpha Trend, Power Tip, Hidden Gem).
-        """
         known_tools_str = ", ".join(self.known_tools)
         targets_str = f"ターゲット: {target_languages}" if target_languages else "ターゲット: TypeScript, PHP, AWS, 新興AIツール"
         
@@ -108,25 +64,13 @@ class PerplexityClient:
 
         # ユーザーの「既知のツール」リスト:
         [{known_tools_str}]
-        ※注意: これらのツールそのものを「新しい発見（Alpha Trend/Hidden Gem）」として提案してはいけません。
+        ※注意: これらのツールを「新しい発見（Alpha Trend/Hidden Gem）」として提案しないでください。
         ※例外: 「Power Tip」枠では、これらのツールのプラグインや拡張機能を提案してください。
 
         # 提案の3本柱（必ず各1つずつ含めること）:
-        1. **Alpha Trend (最新トレンド)**:
-           - 過去24〜48時間以内にGitHub Trending (英語) や Hacker Newsで火がついたばかりの「誰も知らない」ツール。
-           - {targets_str}。
-        
-        2. **Power Tip (活用術・拡張)**:
-           - ユーザーの「既知のツール」（特にObsidian, Brave, Notion）を強化するプラグイン、拡張機能、または高度な設定。
-           - 「Antygravity」や「Brave拡張」などのような、既存環境をパワーアップさせるもの。
-
-        3. **Hidden Gem (隠れた名作)**:
-           - リリースから時間は経っているが、ユーザーがまだ認知していないであろう「渋い」「便利」なツール。
-           - Overleafのように実用的で、プロフェッショナルが愛用するもの。
-
-        # 制約事項:
-        - 結果は日本語で出力してください。
-        - 各項目の `buzz_factor` には、それが「Alpha Trend」なのか「Power Tip」なのか「Hidden Gem」なのかを明記してください。
+        1. **Alpha Trend (最新トレンド)**: 過去24〜48時間以内にGitHub Trending等で話題になった新ツール。{targets_str}
+        2. **Power Tip (活用術・拡張)**: 既知のツールを強化するプラグイン・設定。
+        3. **Hidden Gem (隠れた名作)**: プロが愛用するがあまり知られていないツール。
 
         以下のJSON形式のみで回答してください:
         {{
@@ -137,32 +81,39 @@ class PerplexityClient:
                     "description": "概要（日本語）。なぜこれが有益か？",
                     "url": "URL",
                     "buzz_factor": "【Alpha Trend】 / 【Power Tip】 / 【Hidden Gem】 のいずれかを記載"
-                }},
-                ... (合計3つ)
+                }}
             ],
-            "one_line_summary": "今日の3カテゴリのハイライト要約（1文）"
+            "one_line_summary": "今日の3カテゴリのハイライト要約"
         }}
         """
 
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Find 3 'Alpha' tech trends/tools from GitHub Trending (English) or Hacker News related to {category} in the last 24h."}
-        ]
+        prompt = f"{system_prompt}\n\n上記の指示に従い、{category}分野におけるトレンドと情報を検索・生成してください。"
+        
+        models_to_try = self.get_available_models()
+        last_error = None
+        
+        for model_name in models_to_try:
+            print(f"Trying model: {model_name}")
+            try:
+                # ツールにGoogle検索をセット。モデルによってはサポートされない可能性があるため、エラー時は次のモデルへ
+                model = genai.GenerativeModel(
+                    model_name=model_name
+                )
+                
+                response = model.generate_content(
+                    prompt,
+                    generation_config=genai.GenerationConfig(
+                        response_mime_type="application/json",
+                    )
+                )
+                
+                content = response.text
+                content = content.replace('```json', '').replace('```', '').strip()
+                return json.loads(content)
 
-        try:
-            response = self.client.chat.completions.create(
-                model="sonar-pro",
-                messages=messages
-            )
-            
-            content = response.choices[0].message.content
-            # Ensure we get clean JSON
-            start = content.find('{')
-            end = content.rfind('}') + 1
-            if start != -1 and end != -1:
-                return json.loads(content[start:end])
-            return json.loads(content)
-
-        except Exception as e:
-            return {"error": str(e)}
-
+            except Exception as e:
+                print(f"Failed with model {model_name}: {e}")
+                last_error = e
+                # エラーが起きてもループを継続し、次のモデルでリトライする
+                
+        return {"error": _format_api_error(last_error) if last_error else "All models failed."}
