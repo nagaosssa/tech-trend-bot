@@ -7,8 +7,8 @@ from trend_history import TrendHistory
 import datetime
 import json
 
-# Load environment variables
-load_dotenv()
+# Load environment variables (.envファイルの値をシステム環境変数より優先)
+load_dotenv(override=True)
 
 CONFIG_FILE = "bot_config.json"
 

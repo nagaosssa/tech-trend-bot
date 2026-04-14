@@ -39,12 +39,15 @@ class GeminiTrendClient:
                     name = m.name.replace('models/', '')
                     models.append(name)
             
-            # Typescriptコードを参考に優先順位付け（1.5-flash > 1.5-pro > ほか）
+            # 最新モデルを優先する順位付け（3.x > 2.5 > 2.0 > 1.5）
             def score(name):
-                # 最新のモデル（2.0や1.5）を優先するロジック
-                if '2.0-flash' in name: return 4
-                if '1.5-flash' in name: return 3
-                if '1.5-pro' in name: return 2
+                if '3.1' in name and 'pro' in name: return 10
+                if '3' in name and 'flash' in name: return 9
+                if '2.5-pro' in name: return 8
+                if '2.5-flash' in name: return 7
+                if '2.0-flash' in name: return 5
+                if '1.5-flash' in name: return 2
+                if '1.5-pro' in name: return 1
                 return 0
                 
             # 非推奨モデルの除外
@@ -53,8 +56,8 @@ class GeminiTrendClient:
             return models
         except Exception as e:
             print(f"Warning: Failed to list models: {e}")
-            # フォールバック
-            return ['gemini-1.5-flash', 'gemini-1.5-pro']
+            # フォールバック（2025年以降の現行モデル）
+            return ['gemini-2.5-flash', 'gemini-2.5-pro']
 
     def get_daily_trends(self, category="Dev Tools", target_languages=None):
         known_tools_str = ", ".join(self.known_tools)

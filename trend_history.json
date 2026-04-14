@@ -14,6 +14,21 @@
       "name": "Ripgrep (rg)",
       "url": "https://github.com/BurntSushi/ripgrep",
       "notified_at": "2026-04-13T11:02:31.266870"
+    },
+    {
+      "name": "OpenManus",
+      "url": "https://github.com/mannaandbeast/OpenManus",
+      "notified_at": "2026-04-14T14:42:02.429589"
+    },
+    {
+      "name": "Obsidian Smart Connections",
+      "url": "https://obsidian.md/plugins?id=smart-connections",
+      "notified_at": "2026-04-14T14:42:02.429589"
+    },
+    {
+      "name": "Typst",
+      "url": "https://typst.app/",
+      "notified_at": "2026-04-14T14:42:02.433358"
     }
   ]
 }
