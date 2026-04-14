@@ -1,34 +1,19 @@
 {
   "history": [
     {
-      "name": "LLaVA-NeXT",
-      "url": "https://github.com/LLaVA-Vision-Language-Models/LLaVA-NeXT",
-      "notified_at": "2026-04-13T11:02:31.264078"
+      "name": "Model Context Protocol (MCP) Servers",
+      "url": "https://github.com/model-context-protocol/servers",
+      "notified_at": "2026-04-14T16:13:21.227533"
     },
     {
-      "name": "Obsidian Tasks Plugin",
-      "url": "https://publish.obsidian.md/plugins/tasks",
-      "notified_at": "2026-04-13T11:02:31.264834"
+      "name": "Obsidian Web Clipper (Official Extension)",
+      "url": "https://obsidian.md/clipper",
+      "notified_at": "2026-04-14T16:13:21.229810"
     },
     {
-      "name": "Ripgrep (rg)",
-      "url": "https://github.com/BurntSushi/ripgrep",
-      "notified_at": "2026-04-13T11:02:31.266870"
-    },
-    {
-      "name": "OpenManus",
-      "url": "https://github.com/mannaandbeast/OpenManus",
-      "notified_at": "2026-04-14T14:42:02.429589"
-    },
-    {
-      "name": "Obsidian Smart Connections",
-      "url": "https://obsidian.md/plugins?id=smart-connections",
-      "notified_at": "2026-04-14T14:42:02.429589"
-    },
-    {
-      "name": "Typst",
-      "url": "https://typst.app/",
-      "notified_at": "2026-04-14T14:42:02.433358"
+      "name": "Ghostty",
+      "url": "https://ghostty.org/",
+      "notified_at": "2026-04-14T16:13:21.231076"
     }
   ]
 }
